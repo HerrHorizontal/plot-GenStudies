@@ -1,0 +1,57 @@
+GenTopHad_Eta MaxBin =  8.77075767517
+GenTopHad_Eta MinBin =  -8.78721618652
+GenTopHad_Phi MaxBin =  3.14159083366
+GenTopHad_Phi MinBin =  -3.1415913105
+GenTopHad_Pt MaxBin =  1656.3157959
+GenTopHad_Pt MinBin =  0.0901504233479
+GenTopLep_Eta MaxBin =  8.36649227142
+GenTopLep_Eta MinBin =  -7.66883468628
+GenTopLep_Phi MaxBin =  3.14158916473
+GenTopLep_Phi MinBin =  -3.14158844948
+GenTopLep_Pt MaxBin =  1959.79772949
+GenTopLep_Pt MinBin =  0.111883662641
+
+
+GenTopHad_BHadron_Eta MaxBin =  6.37284421921
+GenTopHad_BHadron_Eta MinBin =  -9.0
+GenTopHad_BHadron_Phi MaxBin =  3.14158296585
+GenTopHad_BHadron_Phi MinBin =  -9.0
+GenTopHad_BHadron_Pt MaxBin =  1370.74572754
+GenTopHad_BHadron_Pt MinBin =  -9.0
+GenTopLep_BHadron_Eta MaxBin =  6.41183996201
+GenTopLep_BHadron_Eta MinBin =  -9.0
+GenTopLep_BHadron_Phi MaxBin =  3.14158773422
+GenTopLep_BHadron_Phi MinBin =  -9.0
+GenTopLep_BHadron_Pt MaxBin =  1032.5645752
+GenTopLep_BHadron_Pt MinBin =  -9.0
+
+
+GenTopHad_B_GenJet_Eta MaxBin =  2.39999866486
+GenTopHad_B_GenJet_Eta MinBin =  -9.0
+GenTopHad_B_GenJet_Phi MaxBin =  3.14158415794
+GenTopHad_B_GenJet_Phi MinBin =  -9.0
+GenTopHad_B_GenJet_Pt MaxBin =  1750.41455078
+GenTopHad_B_GenJet_Pt MinBin =  -9.0
+GenTopLep_B_GenJet_Eta MaxBin =  2.39997673035
+GenTopLep_B_GenJet_Eta MinBin =  -9.0
+GenTopLep_B_GenJet_Phi MaxBin =  3.14157056808
+GenTopLep_B_GenJet_Phi MinBin =  -9.0
+GenTopLep_B_GenJet_Pt MaxBin =  2000.26049805
+GenTopLep_B_GenJet_Pt MinBin =  -9.0
+
+
+AdditionalGenBJet_Eta MaxBin =  2.39999127388
+AdditionalGenBJet_Eta MinBin =  -2.39998483658
+AdditionalGenBJet_Phi MaxBin =  3.14158844948
+AdditionalGenBJet_Phi MinBin =  -3.14159059525
+AdditionalGenBJet_Pt MaxBin =  2332.75854492
+AdditionalGenBJet_Pt MinBin =  20.0000019073
+
+
+AdditionalBHadron_Eta MaxBin =  11.6414804459
+AdditionalBHadron_Eta MinBin =  -10.9566001892
+AdditionalBHadron_Phi MaxBin =  3.14157938957
+AdditionalBHadron_Phi MinBin =  -3.14159083366
+AdditionalBHadron_Pt MaxBin =  1374.46862793
+AdditionalBHadron_Pt MinBin =  0.00659402133897
+
