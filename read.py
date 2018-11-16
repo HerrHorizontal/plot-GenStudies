@@ -22,35 +22,36 @@ print chain.GetNtrees()
 
 # define and generate histos
 nbins = 50
+nbins_pT = 251
 # You can get xmin and xmax from an analysis of the data. See: askforbins.py
-h_GenTopHad_Eta = ROOT.TH1D("GenTopHad_Eta", "GenTopHad_Eta", nbins, -9.0, 9.0)
-h_GenTopHad_Phi = ROOT.TH1D("GenTopHad_Phi", "GenTopHad_Phi", nbins, -3.5, 3.5)
-h_GenTopHad_Pt = ROOT.TH1D("GenTopHad_Pt", "GenTopHad_Pt", nbins, 0.0, 1660.0)
-h_GenTopLep_Eta = ROOT.TH1D("GenTopLep_Eta", "GenTopLep_Eta", nbins, -8.0, 8.5)
-h_GenTopLep_Phi = ROOT.TH1D("GenTopLep_Phi", "GenTopLep_Phi", nbins, -3.5, 3.5)
-h_GenTopLep_Pt = ROOT.TH1D("GenTopLep_Pt", "GenTopLep_Pt", nbins, 0.0, 1960.0)
+h_GenTopHad_Eta = ROOT.TH1D("GenTopHad_Eta", "GenTopHad_Eta", nbins, -12.0, 12.0)
+h_GenTopHad_Phi = ROOT.TH1D("GenTopHad_Phi", "GenTopHad_Phi", nbins, -9.0, 3.5)
+h_GenTopHad_Pt = ROOT.TH1D("GenTopHad_Pt", "GenTopHad_Pt", nbins_pT, -10.0, 2500.0)
+h_GenTopLep_Eta = ROOT.TH1D("GenTopLep_Eta", "GenTopLep_Eta", nbins, -12.0, 12.0)
+h_GenTopLep_Phi = ROOT.TH1D("GenTopLep_Phi", "GenTopLep_Phi", nbins, -9.0, 3.5)
+h_GenTopLep_Pt = ROOT.TH1D("GenTopLep_Pt", "GenTopLep_Pt", nbins_pT, -10.0, 2500.0)
 
 h_GenTopHad_B_GenJet_Eta = ROOT.TH1D("GenTopHad_B_GenJet_Eta", "GenTopHad_B_GenJet_Eta", nbins, -9.0, 2.5)
 h_GenTopHad_B_GenJet_Phi = ROOT.TH1D("GenTopHad_B_GenJet_Phi", "GenTopHad_B_GenJet_Phi", nbins, -9.0, 3.5)
-h_GenTopHad_B_GenJet_Pt = ROOT.TH1D("GenTopHad_B_GenJet_Pt", "GenTopHad_B_GenJet_Pt", nbins, -9.0, 1755.0)
+h_GenTopHad_B_GenJet_Pt = ROOT.TH1D("GenTopHad_B_GenJet_Pt", "GenTopHad_B_GenJet_Pt", nbins_pT, -10.0, 2500.0)
 h_GenTopLep_B_GenJet_Eta = ROOT.TH1D("GenTopLep_B_GenJet_Eta", "GenTopLep_B_GenJet_Eta", nbins, -9.0, 2.5)
 h_GenTopLep_B_GenJet_Phi = ROOT.TH1D("GenTopLep_B_GenJet_Phi", "GenTopLep_B_GenJet_Phi", nbins, -9.0, 3.5)
-h_GenTopLep_B_GenJet_Pt = ROOT.TH1D("GenTopLep_B_GenJet_Pt", "GenTopLep_B_GenJet_Pt", nbins, -9.0, 2005.0)
+h_GenTopLep_B_GenJet_Pt = ROOT.TH1D("GenTopLep_B_GenJet_Pt", "GenTopLep_B_GenJet_Pt", nbins_pT, -10.0, 2500.0)
 
 h_GenTopHad_B_Hadron_Eta = ROOT.TH1D("GenTopHad_B_Hadron_Eta", "GenTopHad_B_Hadron_Eta", nbins, -9.0, 6.5)
 h_GenTopHad_B_Hadron_Phi = ROOT.TH1D("GenTopHad_B_Hadron_Phi", "GenTopHad_B_Hadron_Phi", nbins, -9.0, 3.5)
-h_GenTopHad_B_Hadron_Pt = ROOT.TH1D("GenTopHad_B_Hadron_Pt", "GenTopHad_B_Hadron_Pt", nbins, -9.0, 1375.0)
+h_GenTopHad_B_Hadron_Pt = ROOT.TH1D("GenTopHad_B_Hadron_Pt", "GenTopHad_B_Hadron_Pt", nbins_pT, -10.0, 2500.0)
 h_GenTopLep_B_Hadron_Eta = ROOT.TH1D("GenTopLep_B_Hadron_Eta", "GenTopLep_B_Hadron_Eta", nbins, -9.0, 7.0)
 h_GenTopLep_B_Hadron_Phi = ROOT.TH1D("GenTopLep_B_Hadron_Phi", "GenTopLep_B_Hadron_Phi", nbins, -9.0, 3.5)
-h_GenTopLep_B_Hadron_Pt = ROOT.TH1D("GenTopLep_B_Hadron_Pt", "GenTopLep_B_Hadron_Pt", nbins, -9.0, 1375.0)
+h_GenTopLep_B_Hadron_Pt = ROOT.TH1D("GenTopLep_B_Hadron_Pt", "GenTopLep_B_Hadron_Pt", nbins_pT, -10.0, 2500.0)
 
 h_AdditionalGenBJet_Eta = ROOT.TH1D("AdditionalGenBJet_Eta", "AdditionalGenBJet_Eta", nbins, -2.5, 2.5)
 h_AdditionalGenBJet_Phi = ROOT.TH1D("AdditionalGenBJet_Phi", "AdditionalGenBJet_Phi", nbins, -3.5, 3.5)
-h_AdditionalGenBJet_Pt = ROOT.TH1D("AdditionalGenBJet_Pt", "AdditionalGenBJet_Pt", nbins, 0.0, 2335.5)
+h_AdditionalGenBJet_Pt = ROOT.TH1D("AdditionalGenBJet_Pt", "AdditionalGenBJet_Pt", nbins_pT, -10.0, 2500.0)
 
 h_AdditionalBHadron_Eta = ROOT.TH1D("AdditionalBHadron_Eta", "AdditionalBHadron_Eta", nbins, -12.0, 12.0)
 h_AdditionalBHadron_Phi = ROOT.TH1D("AdditionalBHadron_Phi", "AdditionalBHadron_Phi", nbins, -3.5, 3.5)
-h_AdditionalBHadron_Pt = ROOT.TH1D("AdditionalBHadron_Pt", "AdditionalBHadron_Pt", nbins, 0.0, 1375.0)
+h_AdditionalBHadron_Pt = ROOT.TH1D("AdditionalBHadron_Pt", "AdditionalBHadron_Pt", nbins_pT, -10.0, 2500.0)
 
 
 

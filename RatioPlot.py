@@ -87,7 +87,7 @@ def shapePlots( histos, savename="",normed = True ):
     #print "KS Score = {}".format(ksScore)
     
     #Make a nice canavas
-    canvas=ROOT.TCanvas("canvas"+savename,"canvas"+savename,800,900)
+    canvas=ROOT.TCanvas("canvas"+savename,"canvas"+savename,1500,1200)
     canvasStyle(canvas)
     
     
@@ -96,7 +96,7 @@ def shapePlots( histos, savename="",normed = True ):
     for ikey,key in enumerate(Histos):
         maxYvalue=max(maxYvalue,Histos[ikey].GetMaximum())
     #Scaling the maxY for more room
-    maxYvalue=maxYvalue*1.35
+    maxYvalue=maxYvalue*1.1
     canvas.cd(1)
     
     #Set X-axis title
@@ -120,7 +120,9 @@ def shapePlots( histos, savename="",normed = True ):
     for ih, h in enumerate(Histos):
         legend_entry = h.GetDirectory().GetName()
         legend_entry = legend_entry.split('.')
-        legend_entry = legend_entry[0]
+        legend_entry = legend_entry[0].split('_')
+        legend_entry = legend_entry[:-1]
+        legend_entry = ' '.join(legend_entry)
         T.AddEntry(Histos[ih], legend_entry, 'l')
     ##Create entry for Kolmogorov-Smirnov value
     #dummy_Histo = ROOT.TH1D("Dummy","Dummy",10,0,1)
@@ -134,26 +136,35 @@ def shapePlots( histos, savename="",normed = True ):
     
     # Ratioplot
     ratioclone=Histos[0].Clone()
+    canvas.cd(2)
+    ratioclones=[]
     for ih, h in enumerate(Histos):
-        if ih > 0:
-            ratioclone.Divide(Histos[ih],Histos[0])
-            ratioclone.SetMinimum(0.0)
-            ratioclone.SetMaximum(2.0)
-            ratioclone.GetYaxis().SetTitle("Sherpa/Powheg")
-            ratioclone.GetYaxis().SetTitleSize(2*ratioclone.GetYaxis().GetTitleSize())
-            ratioclone.GetXaxis().SetTitle(savename)
-            setupStyle(ratioclone)
-            if ih == 1:
-                #Make black line in ratio plot for y=1
-                raticlone_dummy = ratioclone.Clone()
-                for iBin in range(raticlone_dummy.GetNbinsX()):
-                        raticlone_dummy.SetBinContent(iBin+1,1.)
-                
-                ratioclone.SetLineColor(ROOT.kBlue)    
-                raticlone_dummy.SetLineColor(1)
-                raticlone_dummy.Draw("HIST")
+        ratioclones.append(Histos[0].Clone())
+        #print ratioclones[ih].GetName(), ratioclones[ih].GetLineColor()
+        ratioclones[ih].Divide(Histos[ih],Histos[0])
+        #print ratioclones[ih].GetName()
+        ratioclones[ih].SetMinimum(0.0)
+        ratioclones[ih].SetMaximum(2.0)
+        ratioclones[ih].GetYaxis().SetTitle("Ratio")
+        ratioclones[ih].GetYaxis().SetTitleSize(2*ratioclones[ih].GetYaxis().GetTitleSize())
+        ratioclones[ih].GetXaxis().SetTitle(savename)
+        ratioclones[ih].SetLineColor(ih+2)
+        setupStyle(ratioclones[ih])
+        if ih == 0:
+            #Make black line in ratio plot for y=1
+            raticlone_dummy = ratioclones[ih].Clone()
+            for iBin in range(raticlone_dummy.GetNbinsX()):
+                    raticlone_dummy.SetBinContent(iBin+1,1.)
             
-            ratioclone.Draw("HIST E SAME")
+            #ratioclone.SetLineColor(ROOT.kBlue)    
+            raticlone_dummy.SetLineColor(1)
+            raticlone_dummy.Draw("HIST E5")
+        #if ih == 0:            
+         #   ratioclone.Draw("HIST E3 SAME")
+        else:
+            ratioclones[ih].Draw("HIST E SAME")
+        
+    canvas.Update()
     #Save canvas
     canvas.SaveAs(shapePath+"/"+savename+".pdf")
     canvas.SaveAs(shapePath+"/"+savename+".png")
@@ -177,11 +188,11 @@ def main(args = sys.argv[1:]):
 
     # get a list of all keys stored in the TFiles (assuming all TFiles contain the same key content) and write a list of these keys
     kl=[]
-    for ifile in tfs:
-        if tfs[0].GetListOfKeys() == tfs[ifile].GetListOfKeys(): 
+    for ifile, file in enumerate(tfs):
+        if tfs[0].GetListOfKeys().GetSize() == tfs[ifile].GetListOfKeys().GetSize(): 
             continue
         else:
-            print 'The given ROOT files are not compatible. Make sure to forward only ROOT::TFile arguments which contain histograms of the same quantities. \n' + 'Abort!'
+            print 'The given ROOT file ' + str(file) + ' is not compatible. Make sure to forward only ROOT::TFile arguments which contain histograms of the same quantities. \n' + 'Abort!'
             exit(0)
     for key in tfs[0].GetListOfKeys():
         kl.append(key.GetName())
