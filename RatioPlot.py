@@ -3,6 +3,7 @@ import sys
 import os
 import ROOT
 from decimal import Decimal
+from array import array
 
 
 ROOT.gStyle.SetPaintTextFormat("4.2f")
@@ -56,13 +57,69 @@ def setupStyle(graph):
     # graph.GetYaxis().SetLabelSize(2.4*graph.GetXaxis().GetLabelSize())
     return graph
 
+def getlow(l):
+    low = 0
+    if len(l) != 0:
+        low = l[-1]
+    return low
+
+def GetArray_rebinHisto(histo, smallbin = 10, middlebin = 20, endbin = 100):
+    nbins = histo.GetNbinsX() # number of bins of the original histo
+    norm = histo.Integral() # norm of the original histo
+
+    # calculate the old average binwidth
+    oldbinwidth = 0
+    for i in range(nbins):
+        oldbinwidth += histo.GetBinWidth(i)
+    oldbinwidth = oldbinwidth/nbins
+
+    # fill xbins for new binning
+    xbins = [] # list of new low edges of the histogram with ngroup+1 elements
+
+    smallbinRange = histo.GetBinLowEdge(1) + histo.GetBinWidth(1)
+    middlebinRange = smallbinRange
+    endbinRange = middlebinRange
+
+    for i in range(1, nbins+1):
+        integral = histo.Integral(1, i) 
+        if integral < 0.1 * norm:
+            smallbinRange = histo.GetBinLowEdge(i) + histo.GetBinWidth(i)
+        if integral < 0.99 *norm:
+            middlebinRange = histo.GetBinLowEdge(i) + histo.GetBinWidth(i)
+        if integral < 1.0 *norm:
+            endbinRange = histo.GetBinLowEdge(i) + histo.GetBinWidth(i)
+
+    print smallbinRange, middlebinRange, endbinRange
+
+    for i in range(int(np.ceil(smallbinRange/smallbin))):
+        xbins.append(smallbin*i)
+    
+    for i in range(int(np.ceil((middlebinRange-smallbinRange)/middlebin))):
+        low = getlow(xbins)
+        xbins.append(middlebin + low)
+    for i in range(int(np.ceil((endbinRange-middlebinRange)/endbin))):
+        low = getlow(xbins)
+        xbins.append(endbin + low)
+
+    ngroup = len(xbins) - 1
+    xarray = array("d", xbins)
+
+    return ngroup, xarray
+
+def dump_histo(histo):
+    for i in range(1, histo.GetNbinsX()+1):
+        print "bin {0} = {1} (width = {2}".format(i, histo.GetBinCenter(i), histo.GetBinWidth(i))
 '''
 Function which creates RatioPlots from a list of histograms. It always uses the first histogram in the list as a reference to the others.
 '''
-def shapePlots( histos, savename="",normed = True ):
+def shapePlots( histos, savename="",normed = True, rebinned = True):
     # mkdir
-    if normed:
-    	shapePath = "./RatioPlots_normed"
+    if normed and rebinned:
+    	shapePath = "./RatioPlots_normed_rebinned"
+    elif normed:
+        shapePath = "./RatioPlots_normed"
+    elif rebinned:
+        shapePath = "./RatioPlots_rebinned"
     else:
 	shapePath = "./RatioPlots"
     if not os.path.exists( shapePath ):
@@ -70,16 +127,34 @@ def shapePlots( histos, savename="",normed = True ):
 
     # loop over variables
     
-    #create list of histos and normalize them if normed = True
+    #create list of histos and normalize them if normed = True and rebin if rebinned = True
     Histos = histos
     print Histos
-    for histo in Histos:
+    legends = {}
+    for i, histo in enumerate(Histos):
+        if i == 0:
+            ngroup, xarray = GetArray_rebinHisto(histo)
         print histo
+        if rebinned and "Pt" in histo.GetName():
+            newname = histo.GetName() + "_rebinned"
+            xbins = [0, 10, 20, 40 ,60, 80, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000]
+            xarray = array("d", xbins)
+            ngroup = len(xbins)-1
+            histo = histo.Rebin(ngroup, newname, xarray)
+            #print "histo at", histo
+            #dump_histo(histo)
+            print str(histo.GetName()) + ' rebinned for a better overview.'
+        else:
+            print 'Binning maintained for ' + str(histo.GetName()) + '.'
         if normed:
             histo.Scale(1.0/histo.Integral())
-            print str(histo) + ' normalized to 1 \n'
+            print str(histo.GetName()) + ' normalized to 1.\n'
         else:
-            print str(histo) + ' not normalized'
+            print 'Norm maintained for ' + str(histo.GetName()) + '.\n'
+        legends[histo.GetName()+'_'+str(i)] = Histos[i].GetDirectory().GetName()
+        Histos[i] = histo
+
+    print legends
 
     ##Calc Kolmogorov-Smirnov p value
     #ksScore = Histos[0].KolmogorovTest(Histos[1])
@@ -118,9 +193,9 @@ def shapePlots( histos, savename="",normed = True ):
     T = ROOT.TLegend(0.2,0.8,0.45,0.9)
     #Label every histo according to the file they came from
     for ih, h in enumerate(Histos):
-        legend_entry = h.GetDirectory().GetName()
-        legend_entry = legend_entry.split('.')
-        legend_entry = legend_entry[0].split('_')
+        legend_entry = legends[h.GetName() + '_' + str(ih)]
+        legend_entry = ".".join(legend_entry.split('.')[:-1])
+        legend_entry = legend_entry.split('_')
         legend_entry = legend_entry[:-1]
         legend_entry = ' '.join(legend_entry)
         T.AddEntry(Histos[ih], legend_entry, 'l')
@@ -172,7 +247,7 @@ def shapePlots( histos, savename="",normed = True ):
 
 
 ''' read in the histos and create plots
-    infiles should be: Powheg_Histos_binned.root, Sherpa_Histos_binned.root '''
+    infiles should be .root files filled with the desired histograms '''
 
 def main(args = sys.argv[1:]):
     infiles = args

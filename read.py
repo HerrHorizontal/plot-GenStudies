@@ -2,6 +2,7 @@ import ROOT
 import sys
 import os
 import glob
+from array import array
 
 
 ''' read files and write ttbb event data into lists
@@ -24,6 +25,7 @@ print chain.GetNtrees()
 nbins = 50
 nbins_pT = 251
 # You can get xmin and xmax from an analysis of the data. See: askforbins.py
+h_N_GenJets = ROOT.TH1D("N_GenJets", "N_GenJets", 30, -10.0, 20.0)
 h_GenTopHad_Eta = ROOT.TH1D("GenTopHad_Eta", "GenTopHad_Eta", nbins, -12.0, 12.0)
 h_GenTopHad_Phi = ROOT.TH1D("GenTopHad_Phi", "GenTopHad_Phi", nbins, -9.0, 3.5)
 h_GenTopHad_Pt = ROOT.TH1D("GenTopHad_Pt", "GenTopHad_Pt", nbins_pT, -10.0, 2500.0)
@@ -56,7 +58,8 @@ h_AdditionalBHadron_Pt = ROOT.TH1D("AdditionalBHadron_Pt", "AdditionalBHadron_Pt
 
 
 # make sure, that Histo and Variable correspond
-Histos=[
+Histos = [
+h_N_GenJets,
 h_GenTopHad_Eta, h_GenTopHad_Phi, h_GenTopHad_Pt, 
 h_GenTopLep_Eta, h_GenTopLep_Phi, h_GenTopLep_Pt,
 h_GenTopHad_B_GenJet_Eta, h_GenTopHad_B_GenJet_Phi, h_GenTopHad_B_GenJet_Pt, 
@@ -66,7 +69,7 @@ h_GenTopLep_B_Hadron_Eta, h_GenTopLep_B_Hadron_Phi, h_GenTopLep_B_Hadron_Pt,
 h_AdditionalGenBJet_Eta, h_AdditionalGenBJet_Phi, h_AdditionalGenBJet_Pt, 
 h_AdditionalBHadron_Eta, h_AdditionalBHadron_Phi, h_AdditionalBHadron_Pt, 
 ]
-Variables=[]
+Variables = []
 for h in Histos:
     h.Sumw2()
     Variables.append(h.GetName())
@@ -85,6 +88,8 @@ for e in chain:
         b = getattr(e,Variables[ih])
         #title = b.GetTitle()
 #       if len(b) != 1:
+        if isinstance(b, (long, int, float)):
+            b = [b]
         for l in range(len(b)):
                 h.Fill(b[l], e.Weight_GEN_nom*e.Weight_XS)
         #else:
