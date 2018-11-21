@@ -94,30 +94,34 @@ for e in chain:
     if not e.GenEvt_I_TTPlusBB > 0: continue    # GenEvt_I_TTPlusBB =1 for ttb =2 for tt2b =3 for ttbb
     
     for ih,h in enumerate(Histos):
-        # for the first, second, ... leading jet: fill the histograms 
-        for istr, string in enumerate(["1st", "2nd", "3rd", "4th", "5th", "6th"]):
-            if "GenJet_" + string in Variables[ih]:
-                dummy = e.GenJet_Pt
-                b = []
-                for i in range(len(b)):
-                    b.append(dummy[i])
+        # for the first, second, ... leading jet histogram: fill it
+        if "1st_Pt" or "2nd_Pt" or "3rd_Pt" or "4th_Pt" or "5th_Pt" or "6th_Pt" in h.GetName():
+            # loop over all possible histograms and fill them with the according jet pT
+            for istr, string in enumerate(["1st", "2nd", "3rd", "4th", "5th", "6th"]):
+                if "GenJet_" + string in Variables[ih]:
+                    dummy = e.GenJet_Pt
+                    if len(dummy)>=istr:
+                        b = []
+                        for i in range(len(dummy)):
+                            b.append(dummy[i])
 
-                if isinstance(b, (long, int, float)): b = [b]
-                b.sort()
-                h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
-            else:
-                continue
-
-        # fill the histograms for all other quantities
-        b = getattr(e,Variables[ih])
-        #title = b.GetTitle()
-#       if len(b) != 1:
-        if isinstance(b, (long, int, float)):
-            b = [b]
-        for l in range(len(b)):
-                h.Fill(b[l], e.Weight_GEN_nom*e.Weight_XS)
-        #else:
-         #   h.Fill(b[0], e.Weight_GEN_nom)
+                        if isinstance(b, (long, int, float)): 
+                            b = [b]
+                        b.sort()
+                        h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
+                else:
+                    continue
+        else:
+            # fill the histograms for all other quantities
+            b = getattr(e,Variables[ih])
+            #title = b.GetTitle()
+    #       if len(b) != 1:
+            if isinstance(b, (long, int, float)):
+                b = [b]
+            for l in range(len(b)):
+                    h.Fill(b[l], e.Weight_GEN_nom*e.Weight_XS)
+            #else:
+             #   h.Fill(b[0], e.Weight_GEN_nom)
     
 
 ''' write the histos into a new root file depending on the type of generated data used '''
