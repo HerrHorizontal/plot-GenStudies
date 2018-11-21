@@ -24,8 +24,16 @@ print chain.GetNtrees()
 # define and generate histos
 nbins = 50
 nbins_pT = 251
-# You can get xmin and xmax from an analysis of the data. See: askforbins.py
-h_N_GenJets = ROOT.TH1D("N_GenJets", "N_GenJets", 30, -10.0, 20.0)
+# Optional: You can get xmin and xmax from a scan of the data. See: askforbins.py
+h_N_GenJets = ROOT.TH1D("N_GenJets", "N_GenJets", 40, -10.0, 30.0)
+h_GenJet_Pt = ROOT.TH1D("GenJet_Pt", "GenJet_Pt", nbins_pT, -10.0, 2500.0)
+h_GenJet_1st_Pt = ROOT.TH1D("GenJet_1st_Pt", "GenJet_1st_Pt", nbins_pT, -10.0, 2500.0)
+h_GenJet_2nd_Pt = ROOT.TH1D("GenJet_2nd_Pt", "GenJet_2nd_Pt", nbins_pT, -10.0, 2500.0)
+h_GenJet_3rd_Pt = ROOT.TH1D("GenJet_3rd_Pt", "GenJet_3rd_Pt", nbins_pT, -10.0, 2500.0)
+h_GenJet_4th_Pt = ROOT.TH1D("GenJet_4th_Pt", "GenJet_4th_Pt", nbins_pT, -10.0, 2500.0)
+h_GenJet_5th_Pt = ROOT.TH1D("GenJet_5th_Pt", "GenJet_5th_Pt", nbins_pT, -10.0, 2500.0)
+h_GenJet_6th_Pt = ROOT.TH1D("GenJet_6th_Pt", "GenJet_6th_Pt", nbins_pT, -10.0, 2500.0)
+
 h_GenTopHad_Eta = ROOT.TH1D("GenTopHad_Eta", "GenTopHad_Eta", nbins, -12.0, 12.0)
 h_GenTopHad_Phi = ROOT.TH1D("GenTopHad_Phi", "GenTopHad_Phi", nbins, -9.0, 3.5)
 h_GenTopHad_Pt = ROOT.TH1D("GenTopHad_Pt", "GenTopHad_Pt", nbins_pT, -10.0, 2500.0)
@@ -59,7 +67,7 @@ h_AdditionalBHadron_Pt = ROOT.TH1D("AdditionalBHadron_Pt", "AdditionalBHadron_Pt
 
 # make sure, that Histo and Variable correspond
 Histos = [
-h_N_GenJets,
+h_N_GenJets, h_GenJet_Pt, h_GenJet_1st_Pt, h_GenJet_2nd_Pt, h_GenJet_3rd_Pt, h_GenJet_4th_Pt, h_GenJet_5th_Pt, h_GenJet_6th_Pt,
 h_GenTopHad_Eta, h_GenTopHad_Phi, h_GenTopHad_Pt, 
 h_GenTopLep_Eta, h_GenTopLep_Phi, h_GenTopLep_Pt,
 h_GenTopHad_B_GenJet_Eta, h_GenTopHad_B_GenJet_Phi, h_GenTopHad_B_GenJet_Pt, 
@@ -82,9 +90,25 @@ for e in chain:
     ievt+=1
     if ievt%5000==0:
         print "at event", ievt
+
     if not e.GenEvt_I_TTPlusBB > 0: continue    # GenEvt_I_TTPlusBB =1 for ttb =2 for tt2b =3 for ttbb
     
     for ih,h in enumerate(Histos):
+        # for the first, second, ... leading jet: fill the histograms 
+        for istr, string in enumerate(["1st", "2nd", "3rd", "4th", "5th", "6th"]):
+            if "GenJet_" + string in Variables[ih]:
+                dummy = e.GenJet_Pt
+                b = []
+                for i in range(len(b)):
+                    b.append(dummy[i])
+
+                if isinstance(b, (long, int, float)): b = [b]
+                b.sort()
+                h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
+            else:
+                continue
+
+        # fill the histograms for all other quantities
         b = getattr(e,Variables[ih])
         #title = b.GetTitle()
 #       if len(b) != 1:
