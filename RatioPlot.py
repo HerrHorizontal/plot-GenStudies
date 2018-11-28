@@ -132,9 +132,9 @@ def shapePlots( histos, savename="",normed = True, rebinned = True):
     print Histos
     legends = {}
     for i, histo in enumerate(Histos):
-        if i == 0:
-            ngroup, xarray = GetArray_rebinHisto(histo)
-        print histo
+        #if i == 0:
+            #ngroup, xarray = GetArray_rebinHisto(histo)
+        print i, "\t", histo
         if rebinned and "Pt" in histo.GetName():
             newname = histo.GetName() + "_rebinned"
             xbins = [0, 10, 20, 40 ,60, 80, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000]
@@ -147,10 +147,16 @@ def shapePlots( histos, savename="",normed = True, rebinned = True):
         else:
             print 'Binning maintained for ' + str(histo.GetName()) + '.'
         if normed:
-            histo.Scale(1.0/histo.Integral())
-            print str(histo.GetName()) + ' normalized to 1.\n'
+            norm = histo.Integral()
+            if not norm == 0:
+                histo.Scale(1.0/norm)
+                print str(histo.GetName()) + ' normalized to 1.\n'
+            else:
+                print "WARNING: histo '%s' has zero integral" % histo.GetName()
         else:
             print 'Norm maintained for ' + str(histo.GetName()) + '.\n'
+        print histo.GetDirectory().GetName()
+        print Histos[i].GetDirectory().GetName()
         legends[histo.GetName()+'_'+str(i)] = Histos[i].GetDirectory().GetName()
         Histos[i] = histo
 
@@ -262,21 +268,30 @@ def main(args = sys.argv[1:]):
         tfs.append(ROOT.TFile(file,"READ"))
 
     # get a list of all keys stored in the TFiles (assuming all TFiles contain the same key content) and write a list of these keys
-    kl=[]
+    kl=None
     for ifile, file in enumerate(tfs):
-        if tfs[0].GetListOfKeys().GetSize() == tfs[ifile].GetListOfKeys().GetSize(): 
-            continue
-        else:
-            print 'The given ROOT file ' + str(file) + ' is not compatible. Make sure to forward only ROOT::TFile arguments which contain histograms of the same quantities. \n' + 'Abort!'
-            exit(0)
-    for key in tfs[0].GetListOfKeys():
-        kl.append(key.GetName())
+        tmp = [x.GetName() for x in file.GetListOfKeys()]
+        if kl is None:
+            kl = tmp
+        kl = [x for x in tmp if x in kl]
+        # if tfs[0].GetListOfKeys().GetSize() == tfs[ifile].GetListOfKeys().GetSize(): 
+        #     continue
+        # else:
+        #     print 'The given ROOT file ' + str(file) + ' is not compatible. Make sure to forward only ROOT::TFile arguments which contain histograms of the same quantities. \n' + 'Abort!'
+        #     exit(0)
+    # for key in tfs[0].GetListOfKeys():
+    #     kl.append(key.GetName())
+    # kl = [x.GetName() for x in tfs[0].GetListOfKeys()]
 
     # for every key in the keylist get the according histogram
     for k in kl:
         histos=[]
         for f in tfs:
-            histos.append(f.Get(k))
+            tmp = f.Get(k)
+            if isinstance(tmp, ROOT.TH1):
+                histos.append(tmp)
+                print histos[-1].GetDirectory().GetName()
+                print tmp.GetDirectory().GetName()
         shapePlots(histos = histos, savename = histos[0].GetName())
             
     for f in tfs:
