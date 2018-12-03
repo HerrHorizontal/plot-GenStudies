@@ -14,8 +14,10 @@ ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetOptTitle(0)
 
 
+
 def getVariables( data ):
     return data.columns
+
 
 
 def canvasStyle(canvas):
@@ -32,7 +34,8 @@ def canvasStyle(canvas):
     canvas.cd(2).SetLeftMargin(0.15);
     canvas.cd(2).SetTicks(1,1)
     canvas.cd(1).SetTicks(1,1)
-    
+  
+
 
 def calcNorm( variable ):
     print("norming values:")
@@ -47,6 +50,7 @@ def calcNorm( variable ):
     return mu, sig
 
 
+
 def setupStyle(graph):
     graph.GetXaxis().SetTitleSize(3*graph.GetXaxis().GetTitleSize())
     # graph.GetXaxis().SetTitleOffset(1.3*graph.GetXaxis().GetTitleOffset())
@@ -57,11 +61,15 @@ def setupStyle(graph):
     # graph.GetYaxis().SetLabelSize(2.4*graph.GetXaxis().GetLabelSize())
     return graph
 
+
+
 def getlow(l):
     low = 0
     if len(l) != 0:
         low = l[-1]
     return low
+
+
 
 def GetArray_rebinHisto(histo, smallbin = 10, middlebin = 20, endbin = 100):
     nbins = histo.GetNbinsX() # number of bins of the original histo
@@ -106,13 +114,19 @@ def GetArray_rebinHisto(histo, smallbin = 10, middlebin = 20, endbin = 100):
 
     return ngroup, xarray
 
+
+
 def dump_histo(histo):
     for i in range(1, histo.GetNbinsX()+1):
         print "bin {0} = {1} (width = {2}".format(i, histo.GetBinCenter(i), histo.GetBinWidth(i))
-'''
-Function which creates RatioPlots from a list of histograms. It always uses the first histogram in the list as a reference to the others.
-'''
+
+
+
 def shapePlots( histos, savename="",normed = True, rebinned = True):
+    '''
+    Function which creates RatioPlots from a list of histograms. It always uses the first histogram in the list as a reference to the others.
+    '''
+
     # mkdir
     if normed and rebinned:
     	shapePath = "./RatioPlots_normed_rebinned"
@@ -125,27 +139,96 @@ def shapePlots( histos, savename="",normed = True, rebinned = True):
     if not os.path.exists( shapePath ):
         os.makedirs(shapePath)
 
-    # loop over variables
     
-    #create list of histos and normalize them if normed = True and rebin if rebinned = True
+    # Create a list of histos and normalize them if normed = True and rebin if rebin = True
     Histos = histos
     print Histos
+    # also set the legend according to their origin
     legends = {}
     for i, histo in enumerate(Histos):
         #if i == 0:
             #ngroup, xarray = GetArray_rebinHisto(histo)
-        print i, "\t", histo
-        if rebinned and "Pt" in histo.GetName():
-            newname = histo.GetName() + "_rebinned"
-            xbins = [0, 10, 20, 40 ,60, 80, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000]
-            xarray = array("d", xbins)
-            ngroup = len(xbins)-1
+        hname = histo.GetName()
+
+        # if rebinned = True, rebin the histograms for a better overview
+        if rebinned:
+            newname = hname + "_rebinned"
+            xarray = 0
+            ngroup = 5
+            xbins = []
+            if "_Pt" in hname or "HadronPt" in hname:
+                # xmin = 0.0
+                # xmax = 2500.0
+                # nbins = int(ceil((xmax-xmin)/10))
+                xbins = [0, 10, 20, 40 ,60, 80, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000]
+                #print "histo at", histo
+                print str(hname) + ' rebinned for a better overview.'
+            elif "_E" in bname:
+                # xmin = 0.0
+                # xmax = 4200.0
+                # nbins = int(ceil((xmax-xmin)/10))
+                xbins = [0, 10, 20, 40 ,60, 80, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000]
+            elif "_Dr" in hname:
+                xmin = 0.0
+                xmax = 12.0
+                nbins = int(ceil((xmax-xmin)/0.01))
+                ngroup = nbins/50
+            elif "_M" in hname:
+                # xmin = 0.0
+                # xmax = 2000.0
+                # nbins = int(ceil((xmax-xmin)/10))
+                xbins = [0, 10, 20, 40 ,60, 80, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200, 1500]
+            elif "_Phi" in hname:
+                xmin = -3.5
+                xmax = 3.5
+                nbins = int(ceil((xmax-xmin)/0.01))
+                ngroup = nbins/50
+            elif "_Eta" in hname:
+                if "Hadron" in hname:
+                    softbin = 3.0
+                    xbins = [-8.0, -4.0, -softbin]
+                    newbin = 50
+                    for i in range(newbin):
+                        xbins.append(xbins[-1] + (2*softbin/newbin))
+                    xbins + [softbin, 4.0]
+
+                elif "Jet" in hname:
+                    # xmax = 3.0
+                    ngroup = 600/newbin
+                # xmin = -xmax
+                # nbins = int(ceil((xmax-xmin)/0.01))
+            elif "N_" in hname or "NHadrons" in hname:
+                # xmin = -0.5
+                # xmax = 30.5
+                # nbins = int(ceil((xmax-xmin)/1))
+                ngroup = 1
+            elif "Weight" in hname:
+                if "GenValue" in hname or "GEN_nom" in hname:
+                    xmin = -500
+                    xmax = -xmin
+                    nbins =int(ceil((xmax-xmin)/1))
+                    ngroup = nbins/50
+                else:
+                    # xmin = 0.0
+                    # xmax = 1.0
+                    # nbins = int(ceil((xmax-xmin)/0.001))
+                    ngroup = nbins/50
+            else:
+                # xmin = chain.GetMinimum(hname)
+                # xmax = chain.GetMaximum(hname)
+                nbins = 300
+                ngroup = nbins/50
+
+            if not len(xbins)==0:
+                xarray = array("d", xbins)
+                ngroup = len(xbins)-1
+
+            # actually rebin the histogram
             histo = histo.Rebin(ngroup, newname, xarray)
-            #print "histo at", histo
-            #dump_histo(histo)
-            print str(histo.GetName()) + ' rebinned for a better overview.'
+
         else:
             print 'Binning maintained for ' + str(histo.GetName()) + '.'
+
         if normed:
             norm = histo.Integral()
             if not norm == 0:
@@ -155,8 +238,8 @@ def shapePlots( histos, savename="",normed = True, rebinned = True):
                 print "WARNING: histo '%s' has zero integral" % histo.GetName()
         else:
             print 'Norm maintained for ' + str(histo.GetName()) + '.\n'
-        print histo.GetDirectory().GetName()
-        print Histos[i].GetDirectory().GetName()
+
+
         legends[histo.GetName()+'_'+str(i)] = Histos[i].GetDirectory().GetName()
         Histos[i] = histo
 
@@ -252,10 +335,13 @@ def shapePlots( histos, savename="",normed = True, rebinned = True):
 
 
 
-''' read in the histos and create plots
-    infiles should be .root files filled with the desired histograms '''
+
 
 def main(args = sys.argv[1:]):
+    ''' 
+    read in the histos and create plots
+    infiles should be .root files filled with the desired histograms 
+    '''
     infiles = args
     for infile in infiles:
         infile = os.path.basename(infile)
@@ -297,6 +383,7 @@ def main(args = sys.argv[1:]):
     for f in tfs:
         f.Close()
     
+
 
 if __name__ == '__main__':
     main()
