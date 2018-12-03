@@ -1,4 +1,6 @@
-
+Histograms/*
 logs/
 RatioPlots*/
 *.swp
+*.root
+*.pyc
