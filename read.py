@@ -90,7 +90,7 @@ def getListOfEdges(chain, batchsize = 50000):
 	nentries = chain.GetEntries()
 	chain_cuts = []
 	ncuts = nentries/batchsize
-	print "Cutting the TChain in " + str(ncuts+1) + " batches"
+	print "Cutting the TChain in " + str(ncuts) + " batches"
 	for i in range(ncuts):
 		chain_cuts.append(i*batchsize)
 	chain_cuts.append(nentries)
@@ -137,8 +137,8 @@ def makeShellScripts(low_edges, up_edges, infiledir):
 									'cd $myvarcwd\n\n', 
 									])
 			scriptfile.writelines(['# fill histo with batch number ' + str(batch) + '\n',
-								   'cd ' + str(histdir) + '\n'])
-			scriptfile.writelines(['python ../fill_histo.py -b ' + batch + ' -l ' + str(edge[0]) + ' -u ' + str(edge[1]) + ' ' + datadir+"/"+os.path.basename(datadir) + '*.root\n'])
+								   'cd ' + str(batchdir) + '\n'])
+			scriptfile.writelines(['python ../../fill_histo.py -n ' + batch + ' -l ' + str(edge[0]) + ' -u ' + str(edge[1]) + ' ' + datadir+"/"+os.path.basename(datadir) + '*.root\n'])
 			scriptfile.write('cd ' + str(workdir))
 		files.append(filename)
 
