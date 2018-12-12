@@ -173,8 +173,8 @@ def run_ShellScripts(scriptfiles):
 	jobids =[]
 	print 'Setting job porperties ... \n'
 	bc = batchConfig_base()
-	bc.diskspace = 3000000
-	bc.runtime = 3600*3 
+	bc.diskspace = 2000000
+	bc.runtime = 3600*2
 
 	# submit the batches in the current stage as an arrayjob to the cluster
 	print 'Submitting jobs ... \n'

@@ -29,225 +29,116 @@ print chain.GetNtrees()
 
 # read the data and write into lists
 
-# MCMatchVarProcessor
-l_GenTopHad_Eta = []
-l_GenTopHad_Phi = []
-l_GenTopHad_Pt = []
-l_GenTopLep_Eta = []
-l_GenTopLep_Phi = []
-l_GenTopLep_Pt = []
+def makeListOfHistoBinning(chain, additionalvetoes = [],jetordered = True):
+	'''
+	Generate list of interesting TBranch in TChain and initialize corresponding histograms with Sumw2 called.
+	If there is a GenJet_Pt branch, optionally make also pT ordered histograms.
+	Veto for uninteresting quantities to reduce dimensionality.
+	'''
+	vetoes = ["GenCJet", "GenHiggs", "CHadron", "Q1", "Q2", "_W_", "_Nu_", "_Lep_", 
+	"PDGID", "Idx", "Evt_ID", "GenEvt", "Reco", "Tags",
+	"Trigger", "SF", "Weight_CSV", "Weight_LHA", "Weight_PU", "Weight_pu", "GenWeight", "variation"]
 
-l_GenTopHad_B_GenJet_Eta = []
-l_GenTopHad_B_GenJet_Phi = []
-l_GenTopHad_B_GenJet_Pt = []
-l_GenTopLep_B_GenJet_Eta = []
-l_GenTopLep_B_GenJet_Phi = []
-l_GenTopLep_B_GenJet_Pt = []
+	for addveto in additionalvetoes:
+		vetoes.append(addveto)
 
-l_GenTopHad_B_Hadron_Eta = []
-l_GenTopHad_B_Hadron_Phi = []
-l_GenTopHad_B_Hadron_Pt = []
-l_GenTopLep_B_Hadron_Eta = []
-l_GenTopLep_B_Hadron_Phi = []
-l_GenTopLep_B_Hadron_Pt = []
+	# make a list of branch names
+	lBranches = chain.GetListOfBranches()
+	branchnames = []
+	for branch in lBranches:
+		branchnames.append(branch.GetName())
 
+	Histos = []
+	for bname in branchnames:
+		# perform vetoes
+		if any(x in bname for x in vetoes): 
+			# print str(bname) + " vetoed"
+			continue
+		#print str(bname) + " keeped"
 
-# AdditionalJetProcessor
-l_AdditionalGenBJet_Eta = []
-l_AdditionalGenBJet_Phi = []
-l_AdditionalGenBJet_Pt = []
+		# set the binning of the histograms
+		if "_Pt" in bname or "HadronPt" in bname:
+			xmin = 0.0
+			xmax = 2500.0
+			nbins = int(ceil((xmax-xmin)/10))
+		elif "_E" in bname:
+			xmin = 0.0
+			xmax = 4200.0
+			nbins = int(ceil((xmax-xmin)/10))
+		elif "_Dr" in bname:
+			xmin = 0.0
+			xmax = 12.0
+			nbins = int(ceil((xmax-xmin)/0.01))
+		elif "_M" in bname:
+			xmin = 0.0
+			xmax = 2000.0
+			nbins = int(ceil((xmax-xmin)/10))
+		elif "_Phi" in bname:
+			xmin = -3.5
+			xmax = 3.5
+			nbins = int(ceil((xmax-xmin)/0.01))
+		elif "_Eta" in bname:
+			if "Hadron" in bname:
+				xmax = 8.0
+			elif "Jet" in bname:
+				xmax = 3.0
+			xmin = -xmax
+			nbins = int(ceil((xmax-xmin)/0.01))
+		elif "Weight" in bname:
+			if "GenValue" in bname or "GEN_nom" in bname:
+				xmin = -500
+				xmax = -xmin
+				nbins =int(ceil((xmax-xmin)/1))
+			else:
+				xmin = 0.0
+				xmax = 1.0
+				nbins = int(ceil((xmax-xmin)/0.001))
+		elif "N_" in bname or "NHadrons" in bname:
+			xmin = -0.5
+			xmax = 30.5
+			nbins = int(ceil((xmax-xmin)/1))
+		else:
+			xmin = chain.GetMinimum(bname)
+			xmax = chain.GetMaximum(bname)
+			nbins = 300
 
-l_AdditionalBHadron_Eta = []
-l_AdditionalBHadron_Phi = []
-l_AdditionalBHadron_Pt = []
+		# if the flag jetordered is set True, make additional six Pt ordered GenJet_Pt histograms
+		# declare the histograms and set the bins
+		if jetordered:
+			if bname == "GenJet_Pt" or bname == "Jet_Pt":
+				names = ["_", "_1st_","_2nd_","_3rd_","_4th_","_5th_", "_6th_"]
+				for x in names:
+					nbname = x.join(bname.rsplit("_", 1))
+					h = ROOT.TH1D()
+					h.SetName(nbname)
+					h.SetTitle(nbname)
+					h.SetBins(nbins, xmin, xmax)
+					#h.SetMinimum(xmin)
+					#h.SetMaximum(xmax)
+					h.Sumw2()
+					Histos.append(h)
+			else:
+				h = ROOT.TH1D()
+				h.SetName(bname)
+				h.SetTitle(bname)
+				h.SetBins(nbins, xmin, xmax)
+				#h.SetMinimum(xmin)
+				#h.SetMaximum(xmax)
+				h.Sumw2()
+				Histos.append(h)
 
+		else:
+			h = ROOT.TH1D()
+			h.SetName(bname)
+			h.SetTitle(bname)
+			h.SetBins(nbins, xmin, xmax)
+			#h.SetMinimum(xmin)
+			#h.SetMaximum(xmax)
+			h.Sumw2()
+			Histos.append(h)
 
-ievt=0
-for e in chain:
-    ievt+=1
-    if ievt%5000==0:
-        print "at event", ievt
-    if not e.GenEvt_I_TTPlusBB > 0: continue
-    #branchtitle=t.GetBranch(Electron_Pt).GetTitle()
-    #if ("[" in branchtitle):
-        #countvariable=branchtitle.rsplit("]",1)[0].split("[")[-1]
-    for i in e.GenTopHad_Eta: l_GenTopHad_Eta.append(i)
-    for i in e.GenTopHad_Phi: l_GenTopHad_Phi.append(i)
-    for i in e.GenTopHad_Pt: l_GenTopHad_Pt.append(i)
-    for i in e.GenTopLep_Eta: l_GenTopLep_Eta.append(i)
-    for i in e.GenTopLep_Phi: l_GenTopLep_Phi.append(i)
-    for i in e.GenTopLep_Pt: l_GenTopLep_Pt.append(i)
-
-    for i in e.GenTopHad_B_GenJet_Eta: l_GenTopHad_B_GenJet_Eta.append(i)
-    for i in e.GenTopHad_B_GenJet_Phi: l_GenTopHad_B_GenJet_Phi.append(i)
-    for i in e.GenTopHad_B_GenJet_Pt: l_GenTopHad_B_GenJet_Pt.append(i)
-    for i in e.GenTopLep_B_GenJet_Eta: l_GenTopLep_B_GenJet_Eta.append(i)
-    for i in e.GenTopLep_B_GenJet_Phi: l_GenTopLep_B_GenJet_Phi.append(i)
-    for i in e.GenTopLep_B_GenJet_Pt: l_GenTopLep_B_GenJet_Pt.append(i)
-
-    for i in e.GenTopHad_B_Hadron_Eta: l_GenTopHad_B_Hadron_Eta.append(i)
-    for i in e.GenTopHad_B_Hadron_Phi: l_GenTopHad_B_Hadron_Phi.append(i)
-    for i in e.GenTopHad_B_Hadron_Pt: l_GenTopHad_B_Hadron_Pt.append(i)
-    for i in e.GenTopLep_B_Hadron_Eta: l_GenTopLep_B_Hadron_Eta.append(i)
-    for i in e.GenTopLep_B_Hadron_Phi: l_GenTopLep_B_Hadron_Phi.append(i)
-    for i in e.GenTopLep_B_Hadron_Pt: l_GenTopLep_B_Hadron_Pt.append(i)
-
-    for i in e.AdditionalGenBJet_Eta: l_AdditionalGenBJet_Eta.append(i)
-    for i in e.AdditionalGenBJet_Phi: l_AdditionalGenBJet_Phi.append(i)
-    for i in e.AdditionalGenBJet_Pt: l_AdditionalGenBJet_Pt.append(i)
-
-    for i in e.AdditionalBHadron_Eta: l_AdditionalBHadron_Eta.append(i)
-    for i in e.AdditionalBHadron_Phi: l_AdditionalBHadron_Phi.append(i)
-    for i in e.AdditionalBHadron_Pt: l_AdditionalBHadron_Pt.append(i)
-    
-    
-
-# set histogram boundaries
-xmin_GenTopHad_Eta = min(l_GenTopHad_Eta)
-xmax_GenTopHad_Eta = max(l_GenTopHad_Eta)
-xmin_GenTopHad_Phi = min(l_GenTopHad_Phi)
-xmax_GenTopHad_Phi = max(l_GenTopHad_Phi)
-xmin_GenTopHad_Pt = min(l_GenTopHad_Pt)
-xmax_GenTopHad_Pt = max(l_GenTopHad_Pt)
-xmin_GenTopLep_Eta = min(l_GenTopLep_Eta)
-xmax_GenTopLep_Eta = max(l_GenTopLep_Eta)
-xmin_GenTopLep_Phi = min(l_GenTopLep_Phi)
-xmax_GenTopLep_Phi = max(l_GenTopLep_Phi)
-xmin_GenTopLep_Pt = min(l_GenTopLep_Pt)
-xmax_GenTopLep_Pt = max(l_GenTopLep_Pt)
-
-xmin_GenTopHad_B_Hadron_Eta = min(l_GenTopHad_B_Hadron_Eta)
-xmax_GenTopHad_B_Hadron_Eta = max(l_GenTopHad_B_Hadron_Eta)
-xmin_GenTopHad_B_Hadron_Phi = min(l_GenTopHad_B_Hadron_Phi)
-xmax_GenTopHad_B_Hadron_Phi = max(l_GenTopHad_B_Hadron_Phi)
-xmin_GenTopHad_B_Hadron_Pt = min(l_GenTopHad_B_Hadron_Pt)
-xmax_GenTopHad_B_Hadron_Pt = max(l_GenTopHad_B_Hadron_Pt)
-xmin_GenTopLep_B_Hadron_Eta = min(l_GenTopLep_B_Hadron_Eta)
-xmax_GenTopLep_B_Hadron_Eta = max(l_GenTopLep_B_Hadron_Eta)
-xmin_GenTopLep_B_Hadron_Phi = min(l_GenTopLep_B_Hadron_Phi)
-xmax_GenTopLep_B_Hadron_Phi = max(l_GenTopLep_B_Hadron_Phi)
-xmin_GenTopLep_B_Hadron_Pt = min(l_GenTopLep_B_Hadron_Pt)
-xmax_GenTopLep_B_Hadron_Pt = max(l_GenTopLep_B_Hadron_Pt)
-
-xmin_GenTopHad_B_GenJet_Eta = min(l_GenTopHad_B_GenJet_Eta)
-xmax_GenTopHad_B_GenJet_Eta = max(l_GenTopHad_B_GenJet_Eta)
-xmin_GenTopHad_B_GenJet_Phi = min(l_GenTopHad_B_GenJet_Phi)
-xmax_GenTopHad_B_GenJet_Phi = max(l_GenTopHad_B_GenJet_Phi)
-xmin_GenTopHad_B_GenJet_Pt = min(l_GenTopHad_B_GenJet_Pt)
-xmax_GenTopHad_B_GenJet_Pt = max(l_GenTopHad_B_GenJet_Pt)
-xmin_GenTopLep_B_GenJet_Eta = min(l_GenTopLep_B_GenJet_Eta)
-xmax_GenTopLep_B_GenJet_Eta = max(l_GenTopLep_B_GenJet_Eta)
-xmin_GenTopLep_B_GenJet_Phi = min(l_GenTopLep_B_GenJet_Phi)
-xmax_GenTopLep_B_GenJet_Phi = max(l_GenTopLep_B_GenJet_Phi)
-xmin_GenTopLep_B_GenJet_Pt = min(l_GenTopLep_B_GenJet_Pt)
-xmax_GenTopLep_B_GenJet_Pt = max(l_GenTopLep_B_GenJet_Pt)
-
-xmin_AdditionalGenBJet_Eta = min(l_AdditionalGenBJet_Eta)
-xmax_AdditionalGenBJet_Eta = max(l_AdditionalGenBJet_Eta)
-xmin_AdditionalGenBJet_Phi = min(l_AdditionalGenBJet_Phi)
-xmax_AdditionalGenBJet_Phi = max(l_AdditionalGenBJet_Phi)
-xmin_AdditionalGenBJet_Pt = min(l_AdditionalGenBJet_Pt)
-xmax_AdditionalGenBJet_Pt = max(l_AdditionalGenBJet_Pt)
-
-xmin_AdditionalBHadron_Eta = min(l_AdditionalBHadron_Eta)
-xmax_AdditionalBHadron_Eta = max(l_AdditionalBHadron_Eta)
-xmin_AdditionalBHadron_Phi = min(l_AdditionalBHadron_Phi)
-xmax_AdditionalBHadron_Phi = max(l_AdditionalBHadron_Phi)
-xmin_AdditionalBHadron_Pt = min(l_AdditionalBHadron_Pt)
-xmax_AdditionalBHadron_Pt = max(l_AdditionalBHadron_Pt)
-
-
-
-#h_GenTopHad_Eta = f.Get("GenTopHad_Eta")
-#h_GenTopHad_Phi = f.Get("GenTopHad_Phi")
-#h_GenTopHad_Pt = f.Get("GenTopHad_Pt")
-#h_GenTopLep_Eta = f.Get("GenTopLep_Eta")
-#h_GenTopLep_Phi = f.Get("GenTopLep_Phi")
-#h_GenTopLep_Pt = f.Get("GenTopLep_Pt")
-boundaryfile = os.path.join(os.getcwd(), 'bound_hists.dat')
-with open(boundaryfile, 'wb') as textfile:
-
-	textfile.write("GenTopHad_Eta MaxBin = "+ str(xmax_GenTopHad_Eta) + '\n')
-	textfile.write("GenTopHad_Eta MinBin = "+ str(xmin_GenTopHad_Eta)+ '\n')
-
-	textfile.write("GenTopHad_Phi MaxBin = "+ str(xmax_GenTopHad_Phi)+ '\n')
-	textfile.write("GenTopHad_Phi MinBin = "+ str(xmin_GenTopHad_Phi)+ '\n')
-	textfile.write("GenTopHad_Pt MaxBin = "+ str(xmax_GenTopHad_Pt)+ '\n')
-	textfile.write("GenTopHad_Pt MinBin = "+ str(xmin_GenTopHad_Pt)+ '\n')
-
-	textfile.write("GenTopLep_Eta MaxBin = "+ str(xmax_GenTopLep_Eta)+ '\n')
-	textfile.write("GenTopLep_Eta MinBin = "+ str(xmin_GenTopLep_Eta)+ '\n')
-
-	textfile.write("GenTopLep_Phi MaxBin = "+ str(xmax_GenTopLep_Phi+ '\n')
-	textfile.write("GenTopLep_Phi MinBin = "+ str(xmin_GenTopLep_Phi+ '\n')
-
-	textfile.write("GenTopLep_Pt MaxBin = "+ str(xmax_GenTopLep_Pt)+ '\n')
-	textfile.write("GenTopLep_Pt MinBin = "+ str(xmin_GenTopLep_Pt)+ '\n')
-
-	textfile.write("\n")
-
-
-	textfile.write("GenTopHad_BHadron_Eta MaxBin = "+ str(xmax_GenTopHad_B_Hadron_Eta)+ '\n')
-	textfile.write("GenTopHad_BHadron_Eta MinBin = "+ str(xmin_GenTopHad_B_Hadron_Eta)+ '\n')
-
-	textfile.write("GenTopHad_BHadron_Phi MaxBin = "+ str(xmax_GenTopHad_B_Hadron_Phi)+ '\n')
-	textfile.write("GenTopHad_BHadron_Phi MinBin = "+ str(xmin_GenTopHad_B_Hadron_Phi)+ '\n')
-
-	textfile.write("GenTopHad_BHadron_Pt MaxBin = "+ str(xmax_GenTopHad_B_Hadron_Pt)+ '\n')
-	textfile.write("GenTopHad_BHadron_Pt MinBin = "+ str(xmin_GenTopHad_B_Hadron_Pt)+ '\n')
-
-	textfile.write("GenTopLep_BHadron_Eta MaxBin = "+ str(xmax_GenTopLep_B_Hadron_Eta)+ '\n')
-	textfile.write("GenTopLep_BHadron_Eta MinBin = "+ str(xmin_GenTopLep_B_Hadron_Eta)+ '\n')
-
-	textfile.write("GenTopLep_BHadron_Phi MaxBin = "+ str(xmax_GenTopLep_B_Hadron_Phi)+ '\n')
-	textfile.write("GenTopLep_BHadron_Phi MinBin = "+ str(xmin_GenTopLep_B_Hadron_Phi)+ '\n')
-
-	textfile.write("GenTopLep_BHadron_Pt MaxBin = "+ str(xmax_GenTopLep_B_Hadron_Pt)+ '\n')
-	textfile.write("GenTopLep_BHadron_Pt MinBin = "+ str(xmin_GenTopLep_B_Hadron_Pt)+ '\n')
-	textfile.write("\n")
-
-
-	textfile.write("GenTopHad_B_GenJet_Eta MaxBin = "+ str(xmax_GenTopHad_B_GenJet_Eta)+ '\n')
-	textfile.write("GenTopHad_B_GenJet_Eta MinBin = "+ str(xmin_GenTopHad_B_GenJet_Eta)+ '\n')
-
-	textfile.write("GenTopHad_B_GenJet_Phi MaxBin = "+ str(xmax_GenTopHad_B_GenJet_Phi)+ '\n')
-	textfile.write("GenTopHad_B_GenJet_Phi MinBin = "+ str(xmin_GenTopHad_B_GenJet_Phi)+ '\n')
-
-	textfile.write("GenTopHad_B_GenJet_Pt MaxBin = "+ str(xmax_GenTopHad_B_GenJet_Pt)+ '\n')
-	textfile.write("GenTopHad_B_GenJet_Pt MinBin = "+ str(xmin_GenTopHad_B_GenJet_Pt)+ '\n')
-
-	textfile.write("GenTopLep_B_GenJet_Eta MaxBin = "+ str(xmax_GenTopLep_B_GenJet_Eta)+ '\n')
-	textfile.write("GenTopLep_B_GenJet_Eta MinBin = "+ str(xmin_GenTopLep_B_GenJet_Eta)+ '\n')
-
-	textfile.write("GenTopLep_B_GenJet_Phi MaxBin = "+ str(xmax_GenTopLep_B_GenJet_Phi)+ '\n')
-	textfile.write("GenTopLep_B_GenJet_Phi MinBin = "+ str(xmin_GenTopLep_B_GenJet_Phi)+ '\n')
-
-	textfile.write("GenTopLep_B_GenJet_Pt MaxBin = "+ str(xmax_GenTopLep_B_GenJet_Pt)+ '\n')
-	textfile.write("GenTopLep_B_GenJet_Pt MinBin = "+ str(xmin_GenTopLep_B_GenJet_Pt)+ '\n')
-
-	textfile.write("\n")
-
-
-	textfile.write("AdditionalGenBJet_Eta MaxBin = "+ str(xmax_AdditionalGenBJet_Eta)+ '\n')
-	textfile.write("AdditionalGenBJet_Eta MinBin = "+ str(xmin_AdditionalGenBJet_Eta)+ '\n')
-
-	textfile.write("AdditionalGenBJet_Phi MaxBin = "+ str(xmax_AdditionalGenBJet_Phi)+ '\n')
-	textfile.write("AdditionalGenBJet_Phi MinBin = "+ str(xmin_AdditionalGenBJet_Phi)+ '\n')
-
-	textfile.write("AdditionalGenBJet_Pt MaxBin = "+ str(xmax_AdditionalGenBJet_Pt)+ '\n')
-	textfile.write("AdditionalGenBJet_Pt MinBin = "+ str(xmin_AdditionalGenBJet_Pt)+ '\n')
-
-	textfile.write("\n")
-
-
-	textfile.write("AdditionalBHadron_Eta MaxBin = "+ str(xmax_AdditionalBHadron_Eta)+ '\n')
-	textfile.write("AdditionalBHadron_Eta MinBin = "+ str(xmin_AdditionalBHadron_Eta)+ '\n')
-
-	textfile.write("AdditionalBHadron_Phi MaxBin = "+ str(xmax_AdditionalBHadron_Phi)+ '\n')
-	textfile.write("AdditionalBHadron_Phi MinBin = "+ str(xmin_AdditionalBHadron_Phi)+ '\n')
-
-	textfile.write("AdditionalBHadron_Pt MaxBin = "+ str(xmax_AdditionalBHadron_Pt)+ '\n')
-	textfile.write("AdditionalBHadron_Pt MinBin = "+ str(xmin_AdditionalBHadron_Pt)+ '\n')
-
+	print "You have chosen " + str(len(Histos)) + " physical quantities from originally " + str(len(branchnames)) + " available."
+	#print "The corresponding histograms are: \n" + str(Histos)	
+	return Histos
 
 

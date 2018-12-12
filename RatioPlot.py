@@ -4,6 +4,7 @@ import os
 import ROOT
 from decimal import Decimal
 from array import array
+from numpy import ceil
 
 
 ROOT.gStyle.SetPaintTextFormat("4.2f")
@@ -160,14 +161,26 @@ def shapePlots( histos, savename="",normed = True, rebinned = True):
                 # xmin = 0.0
                 # xmax = 2500.0
                 # nbins = int(ceil((xmax-xmin)/10))
-                xbins = [0, 10, 20, 40 ,60, 80, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000]
+                xbins = [0, 10, 20, 40 ,60, 80, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 600, 1000, 2000, 3000]
                 #print "histo at", histo
-                print str(hname) + ' rebinned for a better overview.'
-            elif "_E" in bname:
+            elif "_Eta" in hname:
+                if "Hadron" in hname:
+                    softbin = 3.0
+                    xbins = [-8.0, -4.0, -softbin]
+                    newbin = 50
+                    for n in range(newbin-1):
+                        xbins.append(xbins[-1] + (2*softbin/newbin))
+                    xbins = xbins + [softbin, 4.0, 8.0]
+                elif "Jet" in hname:
+                    xmax = 3.0
+                    xmin = -xmax
+                    nbins = int(ceil((xmax-xmin)/0.01))
+                    ngroup = nbins/50
+            elif "_E" in hname:
                 # xmin = 0.0
                 # xmax = 4200.0
                 # nbins = int(ceil((xmax-xmin)/10))
-                xbins = [0, 10, 20, 40 ,60, 80, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000]
+                xbins = [0, 10, 20, 40 ,60, 80, 100, 120, 140, 160, 180, 200, 220, 250, 300, 350, 400, 450, 500, 600, 1000, 2000, 3000]
             elif "_Dr" in hname:
                 xmin = 0.0
                 xmax = 12.0
@@ -183,48 +196,37 @@ def shapePlots( histos, savename="",normed = True, rebinned = True):
                 xmax = 3.5
                 nbins = int(ceil((xmax-xmin)/0.01))
                 ngroup = nbins/50
-            elif "_Eta" in hname:
-                if "Hadron" in hname:
-                    softbin = 3.0
-                    xbins = [-8.0, -4.0, -softbin]
-                    newbin = 50
-                    for i in range(newbin):
-                        xbins.append(xbins[-1] + (2*softbin/newbin))
-                    xbins + [softbin, 4.0]
-
-                elif "Jet" in hname:
-                    # xmax = 3.0
-                    ngroup = 600/newbin
-                # xmin = -xmax
-                # nbins = int(ceil((xmax-xmin)/0.01))
-            elif "N_" in hname or "NHadrons" in hname:
-                # xmin = -0.5
-                # xmax = 30.5
-                # nbins = int(ceil((xmax-xmin)/1))
-                ngroup = 1
             elif "Weight" in hname:
                 if "GenValue" in hname or "GEN_nom" in hname:
                     xmin = -500
                     xmax = -xmin
                     nbins =int(ceil((xmax-xmin)/1))
-                    ngroup = nbins/50
+                    ngroup = nbins/200
                 else:
-                    # xmin = 0.0
-                    # xmax = 1.0
-                    # nbins = int(ceil((xmax-xmin)/0.001))
-                    ngroup = nbins/50
+                    xmin = 0.0
+                    xmax = 1.0
+                    nbins = int(ceil((xmax-xmin)/0.001))
+                    ngroup = nbins/200
+            elif "N_" in hname or "NHadrons" in hname:
+                # xmin = -0.5
+                # xmax = 30.5
+                # nbins = int(ceil((xmax-xmin)/1))
+                ngroup = 1
             else:
                 # xmin = chain.GetMinimum(hname)
                 # xmax = chain.GetMaximum(hname)
                 nbins = 300
                 ngroup = nbins/50
 
-            if not len(xbins)==0:
+            # actually rebin the histogram
+            if len(xbins)>0:
                 xarray = array("d", xbins)
                 ngroup = len(xbins)-1
+                histo = histo.Rebin(ngroup, newname, xarray)
+            else:
+                histo = histo.Rebin(ngroup, newname)
+            print str(hname) + ' rebinned for a better overview.'
 
-            # actually rebin the histogram
-            histo = histo.Rebin(ngroup, newname, xarray)
 
         else:
             print 'Binning maintained for ' + str(histo.GetName()) + '.'
@@ -238,7 +240,6 @@ def shapePlots( histos, savename="",normed = True, rebinned = True):
                 print "WARNING: histo '%s' has zero integral" % histo.GetName()
         else:
             print 'Norm maintained for ' + str(histo.GetName()) + '.\n'
-
 
         legends[histo.GetName()+'_'+str(i)] = Histos[i].GetDirectory().GetName()
         Histos[i] = histo

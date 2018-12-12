@@ -49,7 +49,7 @@ def main ():
 	if n_batch != None:
 		suffix = str(n_batch)
 
-	onlyone = False
+	onlyone = True
 	if len(infiles)>1: 
 		True
 	elif len(infiles)==1 and not onlyone: 
@@ -105,7 +105,7 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 	If there is a GenJet_Pt branch, optionally make also pT ordered histograms.
 	Veto for uninteresting quantities to reduce dimensionality.
 	'''
-	vetoes = ["GenCJet", "GenHiggs", "CHadron", "Q1", "Q2", "_W_", "_Nu_", "_Lep_", 
+	vetoes = ["GenCJet", "GenHiggs", "CHadron", "Q1", "Q2", "_W_", "_Nu_", "_Lep_", "fromTTH", "FromTopType", "TopPt",
 	"PDGID", "Idx", "Evt_ID", "GenEvt", "Reco", "Tags",
 	"Trigger", "SF", "Weight_CSV", "Weight_LHA", "Weight_PU", "Weight_pu", "GenWeight", "variation"]
 
@@ -126,36 +126,41 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 			continue
 		#print str(bname) + " keeped"
 
+		xmin = xmax = None
+		nbins = None
+
 		# set the binning of the histograms
-		if "_Pt" in bname or "HadronPt" in bname:
+		if bname.endswith("_Pt") or bname.endswith("HadronPt"):
 			xmin = 0.0
 			xmax = 2500.0
 			nbins = int(ceil((xmax-xmin)/10))
-		elif "_E" in bname:
-			xmin = 0.0
-			xmax = 4200.0
-			nbins = int(ceil((xmax-xmin)/10))
-		elif "_Dr" in bname:
-			xmin = 0.0
-			xmax = 12.0
-			nbins = int(ceil((xmax-xmin)/0.01))
-		elif "_M" in bname:
-			xmin = 0.0
-			xmax = 2000.0
-			nbins = int(ceil((xmax-xmin)/10))
-		elif "_Phi" in bname:
-			xmin = -3.5
-			xmax = 3.5
-			nbins = int(ceil((xmax-xmin)/0.01))
-		elif "_Eta" in bname:
+		elif bname.endswith("_Eta"):
 			if "Hadron" in bname:
 				xmax = 8.0
 			elif "Jet" in bname:
 				xmax = 3.0
+			else:
+				xmax = 4.0
 			xmin = -xmax
 			nbins = int(ceil((xmax-xmin)/0.01))
-		elif "Weight" in bname:
-			if "GenValue" in bname or "GEN_nom" in bname:
+		elif bname.endswith("_E"):
+			xmin = 0.0
+			xmax = 4200.0
+			nbins = int(ceil((xmax-xmin)/10))
+		elif bname.endswith("_Dr"):
+			xmin = 0.0
+			xmax = 12.0
+			nbins = int(ceil((xmax-xmin)/0.01))
+		elif bname.endswith("_M"):
+			xmin = 0.0
+			xmax = 2000.0
+			nbins = int(ceil((xmax-xmin)/10))
+		elif bname.endswith("_Phi"):
+			xmin = -3.5
+			xmax = 3.5
+			nbins = int(ceil((xmax-xmin)/0.01))
+		elif bname.startswith("Weight"):
+			if bname.endswith("GenValue") or bname.endswith("GEN_nom"):
 				xmin = -500
 				xmax = -xmin
 				nbins =int(ceil((xmax-xmin)/1))
@@ -163,11 +168,12 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 				xmin = 0.0
 				xmax = 1.0
 				nbins = int(ceil((xmax-xmin)/0.001))
-		elif "N_" in bname or "NHadrons" in bname:
+		elif bname.startswith("N_") or bname.endswith("NHadrons"):
 			xmin = -0.5
 			xmax = 30.5
 			nbins = int(ceil((xmax-xmin)/1))
 		else:
+			print "Warning: Selection fails for ", bname
 			xmin = chain.GetMinimum(bname)
 			xmax = chain.GetMaximum(bname)
 			nbins = 300
@@ -235,6 +241,7 @@ def fillHistos(chain, Histos, low_edge, up_edge):
 				if any( x in h.GetName() for x in names):
 					# loop over all possible histograms and fill them with the according jet pT
 					for istr, string in enumerate(["1st", "2nd", "3rd", "4th", "5th", "6th"]):
+						istr += 1
 						if "GenJet_" + string in h.GetName():
 							# convert the read-write buffer ptr into a list
 							dummy = e.GenJet_Pt
