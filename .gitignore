@@ -1,6 +1,10 @@
-Histograms/*
+Histograms*/*
 logs/
 RatioPlots*/
 *.swp
 *.root
+!tt_semileptonic_Histos.root
+!ttbb_4FS_amcatnlo_Histos.root
+!ttbb_4FS_Powheg_OL_Histos.root
+!ttjets_Histos.root
 *.pyc
