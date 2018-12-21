@@ -63,6 +63,7 @@ def main ():
 		infile = os.path.abspath(infile)
 
 	chain = getChain(infiles = infiles)
+	origin = os.path.dirname(os.path.abspath(infiles[0]))
 
 	# set which events should be filled, default: fill all
 	low_edge = options.low_edge
@@ -73,8 +74,14 @@ def main ():
 		up_edge = chain.GetEntries()
 
 	Histos = makeListOfHistos(chain = chain, additionalvetoes = [],jetordered = True)
-	fillHistos(Histos = Histos, chain = chain, low_edge = low_edge, up_edge = up_edge) 
-	writeHistos(Histos = Histos, origin = os.path.dirname(os.path.abspath(infiles[0])), suffix = suffix)
+	Histos_ttbb = Histos
+	Histos_ttb = Histos
+	fillHistos(Histos = Histos, chain = chain, low_edge = low_edge, up_edge = up_edge ,cuts = ["GenEvt_I_TTPlusBB > 0"]) 
+	fillHistos(Histos = Histos_ttbb, chain = chain, low_edge = low_edge, up_edge = up_edge, cuts = ["GenEvt_I_TTPlusBB == 3"])
+	fillHistos(Histos = Histos_ttb, chain = chain, low_edge = low_edge, up_edge = up_edge, cuts = ["GenEvt_I_TTPlusBB < 3"])
+	writeHistos(Histos = Histos, origin =  origin, suffix = suffix)
+	writeHistos(Histos = Histos_ttbb, origin = origin, suffix = suffix + "_ttbb-cuts")
+	writeHistos(Histos = Histos_ttb, origin = origin, suffix = suffix + "_ttb-cuts")
 
 
 
@@ -182,8 +189,20 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 		# if the flag jetordered is set True, make additional six Pt ordered GenJet_Pt histograms
 		# declare the histograms and set the bins
 		if jetordered:
-			if bname == "GenJet_Pt" or bname == "Jet_Pt":
+			if bname.startswith("GenJet_Pt") and  bname.endswith("_Pt"):
 				names = ["_", "_1st_","_2nd_","_3rd_","_4th_","_5th_", "_6th_"]
+				for x in names:
+					nbname = x.join(bname.rsplit("_", 1))
+					h = ROOT.TH1D()
+					h.SetName(nbname)
+					h.SetTitle(nbname)
+					h.SetBins(nbins, xmin, xmax)
+					#h.SetMinimum(xmin)
+					#h.SetMaximum(xmax)
+					h.Sumw2()
+					Histos.append(h)
+			elif bname.startswith("AdditionalGenBJet") and bname.endswith("_Pt"):
+				names = ["_", "_1st_", "_2nd_"]
 				for x in names:
 					nbname = x.join(bname.rsplit("_", 1))
 					h = ROOT.TH1D()
@@ -220,7 +239,7 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 
 
 
-def fillHistos(chain, Histos, low_edge, up_edge):
+def fillHistos(chain, Histos, low_edge, up_edge, cuts = None):
 	''' 
 	Fill the weighted data into the histos if the event is a tt+b-jets event.
 	'''
@@ -236,6 +255,18 @@ def fillHistos(chain, Histos, low_edge, up_edge):
 
 			if not e.GenEvt_I_TTPlusBB > 0: continue    # GenEvt_I_TTPlusBB =1 for ttb =2 for tt2b =3 for ttbb
 
+			if cuts != None:
+				for cut in cuts:
+					if cut.split()[1] == ">": 
+						condition = getattr(e, cut.split()[0]) > cut.split()[-1]
+					elif cut.split()[1] == "<":
+						condition = getattr(e, cut.split()[0]) < cut.split()[-1]
+					else:
+						condition = getattr(e, cut.split()[0]) == cut.split()[-1]
+
+					if not condition: continue
+
+
 			for ih,h in enumerate(Histos):
 				# for the first, second, ... leading jet histogram: fill it
 				names = ["1st_Pt","2nd_Pt","3rd_Pt","4th_Pt","5th_Pt", "6th_Pt"]
@@ -246,6 +277,16 @@ def fillHistos(chain, Histos, low_edge, up_edge):
 						if "GenJet_" + string in h.GetName():
 							# convert the read-write buffer ptr into a list
 							dummy = e.GenJet_Pt
+							if len(dummy)>=istr:
+								b = []
+								for i in range(len(dummy)):
+									b.append(dummy[i])
+								# sort it
+								b.sort()
+								# fill the histograms
+								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
+						elif "AdditionalGenBJet" + string in h.GetName():
+							dummy = e.AdditionalGenBJet_Pt
 							if len(dummy)>=istr:
 								b = []
 								for i in range(len(dummy)):
@@ -282,30 +323,22 @@ def writeHistos(Histos, origin, suffix = ""):
 	if suffix != "":
 		name += "_" + suffix
 	name += ".root"
+
 	if all(x in origin for x in ["ttbb", "amcatnlo"]):
-		f = ROOT.TFile(name % "ttbb_4FS_amcatnlo_Histos","recreate")
-		for h in Histos:
-			h.Write()
-		f.Close()
-	    
-	    
+		f = ROOT.TFile(name % "ttbb_4FS_amcatnlo_Histos","update")    
 	elif all(x in origin for x in ["TTbb", "Powheg"]):
-		f = ROOT.TFile(name % "ttbb_4FS_Powheg_OL_Histos","recreate")
-		for h in Histos:
-			h.Write()
-		f.Close()
-
+		f = ROOT.TFile(name % "ttbb_4FS_Powheg_OL_Histos","update")
 	elif all(x in origin for x in ["TTJets", "amcatnlo"]):
-		f = ROOT.TFile(name % "ttjets_Histos","recreate")
-		for h in Histos:
-			h.Write()
-		f.Close()
-
+		f = ROOT.TFile(name % "ttjets_Histos","update")
 	elif "TTToSemi" in origin:
-		f = ROOT.TFile(name % "tt_semileptonic_Histos","recreate")
-		for h in Histos:
-			h.Write()
-		f.Close()
+		f = ROOT.TFile(name % "tt_semileptonic_Histos","update")
+	else:
+		print "Error: Couldn't find the data origin of the histograms. Abort!"
+		exit(0)
+
+	for h in Histos:
+		h.Write()
+	f.Close()
 
 
 

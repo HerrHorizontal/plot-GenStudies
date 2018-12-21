@@ -47,8 +47,8 @@ def do_unrolling(h):
 
 def unroll_histos(path_to_file):
 	infile = ROOT.TFile.Open(path_to_file)
-	if not helper.intact_root_file(infile):
-		print "ERROR: file '%s' is corrupted!" % path_to_file
+	if f.IsZombie() or f.TestBit(ROOT.TFile.kRecovered):
+		print "file '%s' is broken!" % path_to_file
 		return None
 	hists = []
 	keys = infile.GetListOfKeys()
