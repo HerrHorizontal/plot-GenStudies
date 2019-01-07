@@ -154,7 +154,7 @@ def makeListOfHistos(chain, additionalvetoes = [], jetordered = True):
 			xmin = 0.0
 			xmax = 4200.0
 			nbins = int(ceil((xmax-xmin)/10))
-		elif bname.endswith("_Dr"):
+		elif bname.endswith("_Dr") or bname.endswith("_DeltaR"):
 			xmin = 0.0
 			xmax = 12.0
 			nbins = int(ceil((xmax-xmin)/0.01))
@@ -328,7 +328,7 @@ def fillHistos(chain, reference_chain, Histos, low_edge, up_edge):
 					# loop over all possible histograms and fill them with the according jet pT
 					for istr, string in enumerate(["1st", "2nd", "3rd", "4th", "5th", "6th"]):
 						istr += 1
-						if "GenJet_" + string in h.GetName():
+						if "GenJet_" in h.GetName() and string in h.GetName():
 							# convert the read-write buffer ptr into a list
 							dummy = e.GenJet_Pt
 							if len(dummy)>=istr:
@@ -336,16 +336,18 @@ def fillHistos(chain, reference_chain, Histos, low_edge, up_edge):
 								for i in range(len(dummy)):
 									b.append(dummy[i])
 								# sort it
+								if len(b)==0: continue
 								b.sort()
 								# fill the histograms
 								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
-						elif "AdditionalGenBJet" + string in h.GetName():
+						elif "AdditionalGenBJet" in h.GetName() and string in h.GetName():
 							dummy = e.AdditionalGenBJet_Pt
 							if len(dummy)>=istr:
 								b = []
 								for i in range(len(dummy)):
 									b.append(dummy[i])
 								# sort it
+								if len(b)==0: continue
 								b.sort()
 								# fill the histograms
 								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
