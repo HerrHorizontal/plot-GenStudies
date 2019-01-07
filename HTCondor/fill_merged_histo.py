@@ -70,6 +70,7 @@ def main ():
 		reffile = os.path.abspath(reffile)
 	chain_ref = getChain(infiles = reffiles)
 
+	origin = os.path.dirname(os.path.abspath(infiles[0]))
 
 	# set which events should be filled, default: fill all
 	low_edge = options.low_edge
@@ -80,8 +81,14 @@ def main ():
 		up_edge = chain.GetEntries()
 
 	Histos = makeListOfHistos(chain = chain, additionalvetoes = [],jetordered = True)
-	fillHistos(Histos = Histos, chain = chain, reference_chain = chain_ref, low_edge = low_edge, up_edge = up_edge) 
-	writeHistos(Histos = Histos, origin = os.path.dirname(os.path.abspath(infiles[0])), suffix = suffix)
+	Histos_ttbb = Histos
+	Histos_ttb = Histos
+	fillHistos(Histos = Histos, chain = chain, reference_chain = chain_ref, low_edge = low_edge, up_edge = up_edge, cuts = ["GenEvt_I_TTPlusBB > 0"]) 
+	fillHistos(Histos = Histos_ttbb, chain = chain, reference_chain = chain_ref, low_edge = low_edge, up_edge = up_edge, cuts = ["GenEvt_I_TTPlusBB == 3"])
+	fillHistos(Histos = Histos_ttb, chain = chain, reference_chain = chain_ref, low_edge = low_edge, up_edge = up_edge, cuts = ["GenEvt_I_TTPlusBB < 3"])
+	writeHistos(Histos = Histos, origin =  origin, suffix = suffix)
+	writeHistos(Histos = Histos_ttbb, origin = origin, suffix = suffix + "_ttbb-cuts")
+	writeHistos(Histos = Histos_ttb, origin = origin, suffix = suffix + "_ttb-cuts")
 
 
 
@@ -129,6 +136,7 @@ def makeListOfHistos(chain, additionalvetoes = [], jetordered = True):
 	for bname in branchnames:
 		# perform vetoes
 		if any(x in bname for x in vetoes): 
+			# chain.SetBranchStatus(bname, 0)
 			# print str(bname) + " vetoed"
 			continue
 		#print str(bname) + " keeped"
@@ -251,13 +259,13 @@ def makeListOfHistos(chain, additionalvetoes = [], jetordered = True):
 
 
 
-def fillHistos(chain, reference_chain, Histos, low_edge, up_edge):
+def fillHistos(chain, reference_chain, Histos, low_edge, up_edge, cuts = None):
 	''' 
 	Fill the weighted reference sample into the histos if the event is not a tt+b-jets event, and replace the tt+b jets events with the exclusive samples.
 	The lower and upper edge should be chosen for the sample with higher statistics, to include all the data available.
 	'''
 	# loop over the reference sample
-	ttbbweight = 0
+	ref_ttbbweight = 0
 	for ievt, e in enumerate(reference_chain):
 		# skip all events with eventnumber smaller than low_edge
 		if ievt+1 < low_edge:
@@ -269,7 +277,7 @@ def fillHistos(chain, reference_chain, Histos, low_edge, up_edge):
 				print "at event", ievt+1
 			# in the reference data: get rid of all tt+b-jets events
 			if e.GenEvt_I_TTPlusBB > 0: 
-				ttbbweight += e.Weight_GEN_nom*e.Weight_XS
+				ref_ttbbweight += e.Weight_GEN_nom*e.Weight_XS
 				continue    # GenEvt_I_TTPlusBB =1 for ttb =2 for tt2b =3 for ttbb
 
 			for ih,h in enumerate(Histos):
@@ -330,6 +338,19 @@ def fillHistos(chain, reference_chain, Histos, low_edge, up_edge):
 
 	print "Finished filling Reference sample."
 
+	# get the reference weights for the according cuts
+	chain.Draw("1.>>h_Weight_ttbb(1, 0., 2.)", "Weight_GEN_nom*Weight_XS*(GenEvt_I_TTPlusBB == 3)", "goff")
+	ttbbweight = ROOT.gDirectory.Get("h_Weight_ttbb").GetBinContent(1)
+	print "Sum of weights for reference sample:", ref_ttbbweight, ", for merged ttbb-sample:", ttbbweight
+
+	chain.Draw("1.>>h_Weight_ttb(1, 0., 2.)", "Weight_GEN_nom*Weight_XS*(GenEvt_I_TTPlusBB == 2 || GenEvt_I_TTPlusBB == 1)", "goff")
+	ttbweight = ROOT.gDirectory.Get("h_Weight_ttb").GetBinContent(1)
+	print "Sum of weights for reference sample:", ref_ttbbweight, ", for merged ttb-sample:", ttbweight
+
+	chain.Draw("1.>>h_Weight_ttb(1, 0., 2.)", "Weight_GEN_nom*Weight_XS*(GenEvt_I_TTPlusBB > 0)", "goff")
+	ttbbweight_inclusive = ROOT.gDirectory.Get("h_Weight_ttb").GetBinContent(1)
+	print "Sum of weights for reference sample:", ref_ttbbweight, ", for merged tt+b-jets-sample:", ttbbweight_inclusive
+
 	# loop over the exclusive sample
 	for ievt, e in enumerate(chain):
 		# skip all events with eventnumber smaller than low_edge
@@ -342,6 +363,20 @@ def fillHistos(chain, reference_chain, Histos, low_edge, up_edge):
 				print "at event", ievt+1
 			# exclusive sample: only fill tt+b-jets events (actually there should only be events available which fulfill this condition, just to be sure...)
 			if not e.GenEvt_I_TTPlusBB > 0: continue    # GenEvt_I_TTPlusBB =1 for ttb =2 for tt2b =3 for ttbb
+
+			if cuts != None:
+				for cut in cuts:
+					if cut.split()[1] == ">": 
+						condition = getattr(e, cut.split()[0]) > cut.split()[-1]
+						ttbbweight = ttbbweight_inclusive
+					elif cut.split()[1] == "<":
+						condition = getattr(e, cut.split()[0]) < cut.split()[-1]
+						ttbbweight = ttbweight
+					else:
+						condition = getattr(e, cut.split()[0]) == cut.split()[-1]
+						ttbbweight = ttbbweight
+
+					if not condition: continue
 
 			for ih,h in enumerate(Histos):
 				# for the first, second, ... leading jet histogram: fill it
@@ -361,7 +396,7 @@ def fillHistos(chain, reference_chain, Histos, low_edge, up_edge):
 								if len(b)==0: continue
 								b.sort()
 								# fill the histograms
-								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
+								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS*ref_ttbbweight/ttbbweight)
 						elif "AdditionalGenBJet" in h.GetName() and string in h.GetName():
 							dummy = e.AdditionalGenBJet_Pt
 							if len(dummy)>=istr:
@@ -372,7 +407,7 @@ def fillHistos(chain, reference_chain, Histos, low_edge, up_edge):
 								if len(b)==0: continue
 								b.sort()
 								# fill the histograms
-								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
+								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS*ref_ttbbweight/ttbbweight)
 						elif "AdditionalLightGenJet" in h.GetName() and string in h.GetName():
 							dummy = e.AdditionalLightGenJet_Pt
 							if len(dummy)>=istr:
@@ -383,7 +418,7 @@ def fillHistos(chain, reference_chain, Histos, low_edge, up_edge):
 								if len(b)==0: continue
 								b.sort()
 								# fill the histograms
-								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
+								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS*ref_ttbbweight/ttbbweight)
 						else:
 							continue
 				else:
@@ -397,7 +432,7 @@ def fillHistos(chain, reference_chain, Histos, low_edge, up_edge):
 						b.append(dummy[i])
 					# fill the histogram
 					for l in range(len(b)):
-						h.Fill(b[l], e.Weight_GEN_nom*e.Weight_XS)
+						h.Fill(b[l], e.Weight_GEN_nom*e.Weight_XS*ref_ttbbweight/ttbbweight)
 		# if the eventnumber gets higher than the upper limit: break
 		else:
 			break

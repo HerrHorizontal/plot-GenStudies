@@ -123,6 +123,7 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 	for ibname1,bname1 in enumerate(branchnames):
 		# perform vetoes
 		if any(x in bname1 for x in vetoes): 
+			# chain.SetBranchStatus(bname1, 0)
 			# print str(bname) + " vetoed"
 			continue
 		#print str(bname) + " keeped"

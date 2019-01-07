@@ -63,6 +63,7 @@ def main ():
 		infile = os.path.abspath(infile)
 
 	chain = getChain(infiles = infiles)
+	# chain.SetBranchStatus("*", 1)
 	origin = os.path.dirname(os.path.abspath(infiles[0]))
 
 	# set which events should be filled, default: fill all
@@ -112,6 +113,7 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 	If there is a GenJet_Pt branch, optionally make also pT ordered histograms.
 	Veto for uninteresting quantities to reduce dimensionality.
 	'''
+
 	vetoes = ["GenCJet", "GenHiggs", "CHadron", "Q1", "Q2", "_W_", "_Nu_", "_Lep_", "fromTTH", "FromTopType", "TopPt",
 	"PDGID", "Idx", "Evt_ID", "GenEvt", "Reco", "Tags",
 	"Trigger", "SF", "Weight_CSV", "Weight_LHA", "Weight_PU", "Weight_pu", "GenWeight", "variation"]
@@ -129,6 +131,7 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 	for bname in branchnames:
 		# perform vetoes
 		if any(x in bname for x in vetoes): 
+			#chain.SetBranchStatus(bname, 0)
 			# print str(bname) + " vetoed"
 			continue
 		#print str(bname) + " keeped"
