@@ -213,6 +213,18 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 					#h.SetMaximum(xmax)
 					h.Sumw2()
 					Histos.append(h)
+			elif bname.startswith("AdditionalLightGenJet") and bname.endswith("_Pt"):
+				names = ["_", "_1st_", "_2nd_"]
+				for x in names:
+					nbname = x.join(bname.rsplit("_", 1))
+					h = ROOT.TH1D()
+					h.SetName(nbname)
+					h.SetTitle(nbname)
+					h.SetBins(nbins, xmin, xmax)
+					#h.SetMinimum(xmin)
+					#h.SetMaximum(xmax)
+					h.Sumw2()
+					Histos.append(h)
 			else:
 				h = ROOT.TH1D()
 				h.SetName(bname)
@@ -288,6 +300,17 @@ def fillHistos(chain, Histos, low_edge, up_edge, cuts = None):
 								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
 						elif ("AdditionalGenBJet" in h.GetName() and string in h.GetName()):
 							dummy = e.AdditionalGenBJet_Pt
+							if len(dummy)>=istr:
+								b = []
+								for i in range(len(dummy)):
+									b.append(dummy[i])
+								# sort it
+								if len(b)==0: continue
+								b.sort()
+								# fill the histograms
+								h.Fill(b[-istr], e.Weight_GEN_nom*e.Weight_XS)
+						elif ("AdditionalLightGenJet" in h.GetName() and string in h.GetName()):
+							dummy = e.AdditionalLightGenJet_Pt
 							if len(dummy)>=istr:
 								b = []
 								for i in range(len(dummy)):
