@@ -451,30 +451,29 @@ def writeHistos(Histos, origin, suffix = ""):
 	if suffix != "":
 		name += "_" + suffix
 	name += ".root"
+
 	if all(x in origin for x in ["ttbb", "amcatnlo"]):
 		f = ROOT.TFile(name % "ttbb_4FS_amcatnlo_Histos","recreate")
-		for h in Histos:
-			h.Write()
-		f.Close()
-	    
-	    
-	elif all(x in origin for x in ["TTbb", "Powheg"]):
+
+	elif all(x in origin for x in ["TTbb", "Powheg", "Openloops"]):
 		f = ROOT.TFile(name % "ttbb_4FS_Powheg_OL_Histos","recreate")
-		for h in Histos:
-			h.Write()
-		f.Close()
+
+	elif all(x in origin for x in ["TTbb", "Powheg", "Helac"]):
+		f = ROOT.TFile(name % "ttbb_4FS_PowHel_Histos","update")
 
 	elif all(x in origin for x in ["TTJets", "amcatnlo"]):
 		f = ROOT.TFile(name % "ttjets_Histos","recreate")
-		for h in Histos:
-			h.Write()
-		f.Close()
 
 	elif "TTToSemi" in origin:
 		f = ROOT.TFile(name % "tt_semileptonic_Histos","recreate")
-		for h in Histos:
-			h.Write()
-		f.Close()
+		
+	else:
+		print "Error: Couldn't find the data origin of the histograms. Abort!"
+		return None
+
+	for h in Histos:
+		h.Write()
+	f.Close()
 
 
 

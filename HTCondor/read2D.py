@@ -178,9 +178,9 @@ def run_ShellScripts(scriptfiles):
 	print 'Jobs submitted!\n'
 
 	# wait till the jobs are finished, before the next stage is started
-	print 'Waiting for jobs to finish ... \n'
-	bc.do_qstat(jobids)
-	print 'Reading step finished.'
+	# print 'Waiting for jobs to finish ... \n'
+	# bc.do_qstat(jobids)
+	# print 'Reading step finished.'
 
 	os.chdir(workdir)
 
