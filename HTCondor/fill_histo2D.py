@@ -276,6 +276,8 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 								h = ROOT.TH2D()
 								h.SetName(nbname)
 								h.SetTitle(nbname)
+								h.GetXAxis().SetNameTitle(nbname1, nbname1)
+								h.GetYAxis().SetNameTitle(nbname2, nbname2)
 								print "-"*130
 								print "Histo: ", nbname
 								print "nbins1: %s (type: %s)" % (str(nbins1), str(type(nbins1)))
@@ -295,6 +297,8 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 							h = ROOT.TH2D()
 							h.SetName(nbname)
 							h.SetTitle(nbname)
+							h.GetXAxis().SetNameTitle(nbname1, nbname1)
+							h.GetYAxis().SetNameTitle(bname2, bname2)
 							# print "-"*130
 							# print "Histo: ", nbname
 							# print "nbins1: %s (type: %s)" % (str(nbins1), str(type(nbins1)))
@@ -316,6 +320,8 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 					nbname = bname1 + "-" + bname2
 					h.SetName(nbname)
 					h.SetTitle(nbname)
+					h.GetXAxis().SetNameTitle(bname1, bname1)
+					h.GetYAxis().SetNameTitle(bname2, bname2)
 					# print "-"*130
 					# print "Histo: ", nbname
 					# print "nbins1: %s (type: %s)" % (str(nbins1), str(type(nbins1)))
@@ -337,6 +343,8 @@ def makeListOfHistos(chain, additionalvetoes = [],jetordered = True):
 				h.SetName(nbname)
 				h.SetTitle(nbname)
 				h.SetBins(nbins1, xmin1, xmax1, nbins2, xmin2, xmax2)
+				h.GetXAxis().SetNameTitle(bname1, bname1)
+				h.GetYAxis().SetNameTitle(bname2, bname2)
 				#h.SetMinimum(xmin1)
 				#h.SetMaximum(xmax1)
 				h.Sumw2()
